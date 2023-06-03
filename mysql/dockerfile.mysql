@@ -1,0 +1,15 @@
+FROM mysql:debian
+
+RUN apt-get update && apt-get install -y wget gnupg2
+RUN wget https://dl.influxdata.com/telegraf/releases/telegraf_1.20.2-1_amd64.deb
+RUN dpkg -i telegraf_1.20.2-1_amd64.deb
+
+RUN rm telegraf_1.20.2-1_amd64.deb
+
+COPY ./mysql/telegraf.conf /etc/telegraf/telegraf.conf
+
+COPY ./mysql/init.sql /docker-entrypoint-initdb.d/
+
+EXPOSE 3306 8086
+
+CMD telegraf --config /etc/telegraf/telegraf.conf & /entrypoint.sh mysqld || echo "Failed to start MySQL server"

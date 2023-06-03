@@ -1,0 +1,61 @@
+version: "3.9"
+services:
+  db:
+    container_name: mysql
+    image: mysql.debian
+    build:
+        dockerfile: ./mysql/dockerfile.mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+      MYSQL_ROOT_PASSWORD: myrootpassword
+    ports:
+      - "3306:3306"
+      - "8125:8125"
+    networks:
+      - app_network
+    
+  web:
+    container_name: web
+    image: python3.9
+    build:
+        dockerfile: ./app/dockerfile.app
+    restart: always
+    ports:
+      - "5000:5000"
+      - "443:443"
+    environment:
+      FLASK_APP: app.py
+      FLASK_ENV: development
+      MYSQL_HOST: db
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  influxdb:
+    container_name: storage
+    image: influxdb:1.8
+    restart: always
+    ports:
+      - "8086:8086"
+    environment:
+      INFLUXDB_DB: mydb
+      INFLUXDB_ADMIN_USER: admin
+      INFLUXDB_ADMIN_PASSWORD: adminpass
+      INFLUXDB_USER: myuser
+      INFLUXDB_USER_PASSWORD: mypassword
+    networks:
+      - app_network
+    depends_on:
+      - web  
+
+networks:
+  app_network:
+    name: app_network
+    driver: bridge
